@@ -1,0 +1,145 @@
+--Profile Entity
+CREATE TABLE Profile (
+    profile_id INT PRIMARY KEY,
+    user_name VARCHAR(50) NOT NULL UNIQUE,
+    full_name VARCHAR(100) NOT NULL,
+    headline VARCHAR(200),
+    email VARCHAR(100) NOT NULL UNIQUE,
+    bio TEXT,
+    skills TEXT,
+    connection_count INT DEFAULT 0,
+    profile_date DATE DEFAULT CURRENT_DATE
+);
+
+--Post Entity
+CREATE TABLE Post (
+    post_id INT PRIMARY KEY,
+    profile_id INT NOT NULL,
+    caption TEXT,
+    image_url VARCHAR(255),
+    post_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    location VARCHAR(255),
+
+    CONSTRAINT fk_post_profile
+        FOREIGN KEY (profile_id)
+        REFERENCES Profile(profile_id)
+        ON DELETE CASCADE
+);
+
+--Comment Entity
+CREATE TABLE Comment (
+    comment_id INT PRIMARY KEY,
+    post_id INT NOT NULL,
+    profile_id INT NOT NULL,
+    text TEXT NOT NULL,
+    comment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_comment_post
+        FOREIGN KEY (post_id)
+        REFERENCES Post(post_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_comment_profile
+        FOREIGN KEY (profile_id)
+        REFERENCES Profile(profile_id)
+        ON DELETE CASCADE
+);
+
+--PostLike Entity
+CREATE TABLE PostLike (
+    like_id INT PRIMARY KEY,
+    post_id INT NOT NULL,
+    profile_id INT NOT NULL,
+    like_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_like_post
+        FOREIGN KEY (post_id)
+        REFERENCES Post(post_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_like_profile
+        FOREIGN KEY (profile_id)
+        REFERENCES Profile(profile_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT unique_post_like
+        UNIQUE (post_id, profile_id)
+);
+
+--Follower Entity
+CREATE TABLE Follower (
+    follower_id INT PRIMARY KEY,
+    following_user_id INT NOT NULL,
+    follower_user_id INT NOT NULL,
+    follow_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_following_user
+        FOREIGN KEY (following_user_id)
+        REFERENCES Profile(profile_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_follower_user
+        FOREIGN KEY (follower_user_id)
+        REFERENCES Profile(profile_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT unique_follow
+        UNIQUE (following_user_id, follower_user_id),
+
+    CONSTRAINT prevent_self_follow
+        CHECK (following_user_id <> follower_user_id)
+);
+
+--Hashtag Entity
+CREATE TABLE Hashtag (
+    hashtag_id INT PRIMARY KEY,
+    tag VARCHAR(100) NOT NULL UNIQUE
+);
+
+-- PostHashtag Entity
+CREATE TABLE PostHashtag (
+    post_hashtag_id INT PRIMARY KEY,
+    post_id INT NOT NULL,
+    hashtag_id INT NOT NULL,
+
+    CONSTRAINT fk_posthashtag_post
+        FOREIGN KEY (post_id)
+        REFERENCES Post(post_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_posthashtag_hashtag
+        FOREIGN KEY (hashtag_id)
+        REFERENCES Hashtag(hashtag_id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT unique_post_hashtag
+        UNIQUE (post_id, hashtag_id)
+);
+
+--Indexes
+CREATE INDEX idx_post_profile
+ON Post(profile_id);
+
+CREATE INDEX idx_comment_post
+ON Comment(post_id);
+
+CREATE INDEX idx_comment_profile
+ON Comment(profile_id);
+
+CREATE INDEX idx_like_post
+ON PostLike(post_id);
+
+CREATE INDEX idx_like_profile
+ON PostLike(profile_id);
+
+CREATE INDEX idx_follower_following
+ON Follower(following_user_id);
+
+CREATE INDEX idx_follower_follower
+ON Follower(follower_user_id);
+
+CREATE INDEX idx_posthashtag_post
+ON PostHashtag(post_id);
+
+CREATE INDEX idx_posthashtag_hashtag
+ON PostHashtag(hashtag_id);
